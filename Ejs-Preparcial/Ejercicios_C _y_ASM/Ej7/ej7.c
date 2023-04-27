@@ -44,6 +44,6 @@ char* quitar_prefijo(char* str1, char* str2){
         //str[i]  //Asi tengo el ascii
         res[k] = chr(str2[i]);
         k++;
-    }
+    } 
     return res;
 }

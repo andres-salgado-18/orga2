@@ -1,6 +1,6 @@
 global SumarVectores
 extern malloc
-
+%define SIZE_XMM 16
 section .data
 section .text
 
@@ -17,17 +17,20 @@ section .text
 ; Una es para alineados y otro desalineados
 ; Mismo solo que en términos de bytes
 
-; No sé si esté bien!!!
+
 SumarVectores:
-    ;Cómo más dimensiones?
-    push rbp
+
+    ;Es byte a byte entonces puedo hacer 128/8 = 16 op a la vez
+    push rbp 
     mov rbp, rsp
-    movdqu xmm0, [rdi]
-    movdqu xmm1, [rsi]
-
-    ;Ojo son 16 bytes c/uno
-    paddw xmm0, xmm1 ;Es decir paddWORD
-
-    movdqu [rdx], xmm0 
+    shr ecx, 4 ; Size vector / 16 -> Cuantas operaciones debo hacer
+    .ciclo:
+        movdqu xmm0, [rdi] ;xmm0 <- A
+        movdqu xmm1, [rsi] ;xmm1 <- B
+        add rdi, 16
+        add rsi, 16
+        paddb xmm0, xmm1
+        movdqu [rdx], xmm0
+        add rdx, 16
+    loop .ciclo
     pop rbp
-    ret

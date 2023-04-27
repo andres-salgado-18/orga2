@@ -11,15 +11,21 @@ section .data
 section .text
 
 InicializarVector:
-    push rbp
-    mov rbp, rsp
-;rdi <- A, rsi <- valorInicial , rdx <-dimension
-    ;Tengo que ir a la direccion A, luego agregar valorIncial
-    ;A lo largo del vector
-    movd xmm0, esi
-    ;Es decir el valor incial que tiene 4 bytes
-    ; psrad, para hacer el shift ?
-    psrad xmm0, 4
-    movdqu [rdi], xmm0
+  ;rdi <- A ; rsi <- valorInicial, rdx <- dimension
+  ;Memo: Short tiene 2 bytes!
+    push rbp 
+    mov rbp, rsp 
+    movq xmm2, rsi
+    ;Ahora podremos hacer 128/16 = 8 operaciones a la vez
+    shr rcx, 3 ; dimension del vector / 8
+
+    .ciclo:
+        movdqu xmm0, [rdi]
+        pshuflw xmm0, xmm2, 0  ;Suffle a low xmm0
+        punpcklwd xmm0, xmm0   ;Unpack el valor (es decir se llena con este mismo)
+        movdqu [rdi], xmm0
+        add rdi, 16
+    loop .ciclo
+
     pop rbp
     ret

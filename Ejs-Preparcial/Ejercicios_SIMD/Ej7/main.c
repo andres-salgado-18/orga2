@@ -3,5 +3,6 @@
 #include "ej7.h"
 
 int main(){
+    sumarVector();
     return 0;
 }
