@@ -1,0 +1,7 @@
+main_asm
+main_c
+
+tests_asm
+tests_c
+
+*.o
