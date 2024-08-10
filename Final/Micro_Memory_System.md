@@ -67,13 +67,13 @@ La memoria principal normalmente está administrada por bloques llamados página
 ## Hardware dedicado
 Se agrega un controlador cache que está entre el procesador y el bus del sistema, intermedia. Las líneas del bus de control son las que indican al exterior qué operación está iniciando el procesador hacia el sistema, son las que arbitran (las líneas de control), el controlador cache las toma y se convierte en el acto en el árbitro del bus, el controlador caché es árbitro de bus. Este lee el address solicitado y qué se está haciendo (control), este determina si ir al bus de sistema o la cache. Se compone de la siguiente manera,
 
-![](./adjuntos/procesador_controlador_cache.png)
+![](procesador_controlador_cache.png)
 
 ## Organización de una Cache
 
 La unidad mínima son las líneas (cada una es un conjunto de bytes) que están en una zona de la memoria (generalmente principal), la línea comienza en dirección física múltiplo al tamaño de la línea (como pequeñas páginas), cada línea lleva asociado un tag que indica a que dirección de memoria corresponde (los bits más significativos para saber en qué dirección inicia).
 
-![](./adjuntos/cache_directory.png)
+![](cache_directory.png)
 
 La organización de un cash requiere contemplar 4 factores en función de las operaciones que requiere la CPU
 - Line placement
@@ -93,18 +93,18 @@ Para leer una dirección se hace $direccion / Line Size$ y se toma parte entera,
 - Direct mapped, único lugar donde poner la línea (mediante  LineFrameAddres $mod$ LineSize)
 	- Simplifica al máximo el placement y búsqueda, es la más barata en término energéticos ✅
 	- Peor hit rate, dos lineas frecuentemente usadas que ocupen el mismo lugar se desalojan entre sí, **conflict miss** ❌
-	- ![](./adjuntos/direct_mapped.png)
+	- ![](direct_mapped.png)
 - Set associative, grupo de lineas en el cache en las que se puede guardar la nueva linea, LineFrameAddres $mod$ # sets
 	- Mejor relación de compromiso ✅
 	- Puede tener **conflict miss** ❌
 	- Se quiere disminuir el conflict miss, el controlador cache modifica la forma de organizar la memoria cache y la forma en la que esta mapea en la principal, la cache ahora se organiza en bancos (o vías). La memoria principal se trata (como antes) en conjunto de páginas pero el tamaño de cada uno será al de el tamaño de vía.
-	- ![](./adjuntos/set_associative.png)
+	- ![](set_associative.png)
 
 ### **Line identification**
 
-![](./adjuntos/line_id_1.png)
+![](line_id_1.png)
 
-![](./adjuntos/line_id_2.png)
+![](line_id_2.png)
 ### **Line Replacement**
 
 Generalmente son tipo Set-asociativas, n este punto tenemos que resolver cual de las $n$ vías desalojar cuando hay **Conflict Miss**
@@ -136,7 +136,7 @@ La mayoría de accesos son lecturas. En cambio para escribir se necesita saber s
 
 **Obs:** Si una CPU necesita buscar más instrucciones y al mismo tiempo resolver un Load/Store con memoria (tenemos un bottleneck), se usa dos Cache separados para código y datos (*Split Cache*)
 
-![](./adjuntos/amd_cache.png)
+![](amd_cache.png)
 
 ## Cache en Sistemas Multiprocesador
 
@@ -160,11 +160,11 @@ Un **Sistema de Coherencia de Caches** debe proporcionar (para los item comparti
 
 En los SMP se implementan por hardware, **protocolos de coherencia**, dos clases
 
-![](./adjuntos/coherencia_cache_clases.png)
+![](coherencia_cache_clases.png)
 
 
 Dos categorías (sobre los que usan ==snoop bus==),
-![](./adjuntos/coherencia_snoopy_protocols.png)
+![](coherencia_snoopy_protocols.png)
 
 
 ❕Mucho más usado el snoopy
@@ -173,7 +173,7 @@ Dos categorías (sobre los que usan ==snoop bus==),
 
 El snoop bus se conecta desde el bus de sistema a cada controlador cache (uno por cada), este "espía" lo que hacen los demás procesadores al leer la dirección y la acción requerida, si es un hit se resuelve desde el que la detectó y activa el protocolo de coherencia, sino sigue en su proceso normal.
 
-![](./adjuntos/coherencia_snoop_bus.png)
+![](coherencia_snoop_bus.png)
 
 
 ### **Write Invalidate**
@@ -212,9 +212,9 @@ $Defs$
 
 - Invalid: Es una línea que no está disponible
 - Shared es impreciso, porque cuando se invalida no lo informan a los demás, por lo que una línea que está compartida en varios core, en algún momento puede haber sido descartada por todos los core excepto uno, el cual no se ha enterado (asume compartida), ventaja permite **write-back** (al usar write-invalid)
-- Veremos los requerimientos de la CPU local ![](./adjuntos/msi_1.png)
+- Veremos los requerimientos de la CPU local ![](adjuntos/msi_1.png)
 
-- De acuerdo a los requerimientos del snoop bus,![](./adjuntos/msi_2.png)
+- De acuerdo a los requerimientos del snoop bus,![](msi_2.png)
 - ❌ Al ser tan impreciso shared, hay varias innecesarias (por las dudas de que alguien más tenga la línea)
 
 #### ***MESI***
@@ -226,19 +226,19 @@ $Defs$
 	- **I – Invalid** Lı́nea de cache no es válida.
 - Una de las grandes mejores es la de, cuando una línea está en **Exclusive** y recibe un CPU Write, la misma pasa a estado modified y **NO** invalida el bus (ya que era el único que la tenía)
 - 
-![](./adjuntos/mesi_1.png)
+![](mesi_1.png)
 
 Se agrega RFO (*Request For Ownership*), el cual estará conectado entre todos los cache controllers. Para qué? El broadcast de invalidación usa esta línea, es enviada por el Cache que necesita escribir en estado Shared o Invalid (para que todos invaliden)
 - Modified y Exclusive son estados **precisos**, el protocolo asegura que una línea en cualquiera de estos estados solo está en este cache (**Ownership**)
 
-![](./adjuntos/mesi_2.png)
+![](mesi_2.png)
 
-![](./adjuntos/mesi_3.png)
+![](mesi_3.png)
 
 
 Se agrega una línea SHARED la cual se usará para os cores se informan, si un core tiene una linea E mira por el snoop bus y ve que se va a leer esa línea, activa shared para que el otro core que la está leyendo no la ponga *exclusive* sino *shared*.
 
-![](./adjuntos/mesi_4.png)
+![](mesi_4.png)
 
 $To-Do:$ Hacer tabla de cambio de estados!
 
@@ -289,13 +289,13 @@ lógico inicial.
 ### **Organización**
 
 Matriz rectangular de celdas, con decodificador de columna y uno de fila, 
-![](./adjuntos/dram_org1.png)
+![](dram_org1.png)
 
-![](./adjuntos/dram_org2.png)
+![](dram_org2.png)
 
 Bancos,
 
-![](./adjuntos/dram_banco.png)
+![](dram_banco.png)
 
 
 ### *DIMM*
@@ -308,4 +308,22 @@ Se organizan en DIMMs se montan a ambos lados del PCB, cada uno se puede pensar 
 
 **Array:** Cada banco de un dispositivo DRAM se compone de un conjunto de arrays esclavos, cuyo número determina el ancho del dispositivo DRAM (x2,x4, etc).
 
-![](./adjuntos/dram_grapg.png)
+![](dram_grapg.png)
+
+### **Standards**
+
+Ahora se usan las SDRAM, el modo burst es consecuencia del principio de vecindad (ráfagas)
+
+Estándar: JEDEC
+
+![](jedec.png)
+
+### **Controladores de memoria**
+
+![](controladores_de_memoria.png)
+
+### **Configuración de DRAM**
+
+Registro de modo de un SDRAM Device
+
+![](configuracion.png)![](configuracion_2.png)
