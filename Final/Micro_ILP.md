@@ -89,6 +89,7 @@ Hay varias alternativas para hacer esto,
 - delayed branch: la instrucción sucesora secuencial se envía al slot de salto demorado, siempre se ejecuta y se aplicará según el resultado de la condición del branch, en caso de que sea taken se descarta y se tiene un ciclo de clock para que salga el resultado de la instrucción destino
 - loop unrolling en el compilador, hacer en forma secuencia los loop
 
+
 ### **Predicción de saltos dinámica**
 
 El procesador comienza a efectuar un análisis del flujo del programa y toma decisiones en función de lo que encuentra se tiene un paso adelante en la predicción de saltos.
@@ -98,8 +99,8 @@ El procesador comienza a efectuar un análisis del flujo del programa y toma dec
 ![](adjuntos/branch_prediction_buffer.png)
 
 - El bit da una pista sobre qué acción tomar (se suele llamar predicción simple a de 1 bit)
-- Si el salto sempre resulta taken, y falla una vez produce dos predicciones fallidas seguidas, ya que el bit se invierte
-- Tener un solo bit limita la efieiecia, por ejemplo si hay taken y non-taken seguidos, o cuando se tienen loops anidados
+- Si el salto siempre resulta taken, y falla una vez produce dos predicciones fallidas seguidas, ya que el bit se invierte
+- Tener un solo bit limita la eficiencia, por ejemplo si hay taken y non-taken seguidos, o cuando se tienen loops anidados
 
 Predicción de 2 bits, la idea es que no se va a cambiar la predicción al primer desacierto, sino que al segundo, se definen los siguientes estados
 
@@ -109,13 +110,15 @@ Predicción de 2 bits, la idea es que no se va a cambiar la predicción al prime
 
 #### **Branch Target Buffer**
 
+En los casos que es difícil saber la dirección a la que se saltará, se tiene una tabla que almacene dichos valores (targets) tiene los 2 bits de antes
+
 ![](adjuntos/branch_target_buffer.png)
 
 - Si el valor no se encuentra se asume taken
 	- Si el resultado es non-taken se acepta el delay y no se guarda la dirección en BTB
 	- Si el resultado es efectivamente taken, se ingresa el valor en la BTB
-- Si el valor se encentra en el BTB, se aplica el campo de dirección de campo almacenado
-	- Si el resultado es taken no hay penalidad y no se guarda ningún nuevo valor
+- Si el valor se encuentra en el BTB, se aplica el campo de dirección de campo almacenado
+	- Si el resultado es taken no hay penalidad y no se guarda ningún nuevo valor (el almacenado sirve)
 	- Si el resultado es non-taken guarda el nuevo valor en la BTB, luego de la penalidad
 
 ## Superscalar
@@ -139,6 +142,7 @@ Hasta ahora, si una instrucción $j$ depende de una instrucción $i$, y la instr
 
 Tratar de enviar las instrucciones a ejecución independientemente del orden que están, nuestro decodificador nos indicará si se presenta algún atasco dónde podemos intentar aplicar este método.
 
+
 Hay riesgos ❌
 
 **Ojo**: La aplicación de los resultados va en orden, sino, estaríamos cambiando completamente la lógica del programa ❕
@@ -149,11 +153,14 @@ Obs:
 1. La instrucción 3 escribe su resultado en un operando de la instrucción 2
 2. La instrucción 4 escribe su resultado en un operando de la instrucción 2
 
- - **WAR**: Este riesgo se llama **Write, After Read**, se obtiene al leer un dato incorrecto, ya que fue escrito fuera de orden 
+ - **WAR**: Este riesgo se llama **Write, After Read**, se obtiene al leer un dato incorrecto, dado que este fue escrito por una instrucción posterior (fuera de orden)
 
 - **WAW**:Otro riesgo es **Write, After Write**, se obtiene al escribir un dato que fue escrito por una instrucción posterior, alterando la ejecución
 
 - **RAW**:Por último tenemos el **Read, After Write**, se obtiene cada vez que una instrucción posterior lee un operando que después es escrito por una instrucción previa, este riesgo existe desde que implementamos *pipeline*, generalmente aparece un pipeline stall
+
+
+Excepciones:
 
 ![](adjuntos/exceptions.png)
 
@@ -170,10 +177,15 @@ El algoritmo de Tomasulo surge para resolver los límites que tenía Scoreboardi
 Qué necesita un procesador para implementar Ejecución Fuera de Orden?
 
 1. Mantener un “link” entre el productor de un dato con su(s) consumidor(es)
+	- Register Renaming
 2. Mantener las instrucciones en espera hasta que estén listas para ejecución
+	- Inserta instrucción a la Reservation Station después del renombre
 3. Las instrucciones deben saber cuando sus operandos están “Ready”
+	* Broadcast el tag cuando el valor es producido
+	* Las instrucciones comparan sus "source tags" con el "broadcasted" tag, si son igualas los mismos -sus operandos- pasan a "READY"
 4. Despachar (“disparar”) la instrucción a su Unidad Funcional ni bien todos sus operandos estén “Ready”.
-
+	- La instrucción "se despierta" si todos sus "sources" (operandos) están en estado "READY"
+	- Si múltiples instrucciones están "READY" sólo pasa una a la Unidad Funcional
 
 ---
 ### **Mantener un “link”entre el productor de un dato con su(s) consumidor(es)**
@@ -194,13 +206,15 @@ Una entrada por cada registro (físico) cada una con un campo
 - Valor: Valor de dicho registro
 - Valid: Si es válido o no el valor
 
+Nota: Si el valor de *Valid* es 0, **hay que tener** un tag, ya que un valor será producido, mientras que si el valor es 1 el valor es el correcto
+
 ### **Reservation Station**
 
 Es un buffer donde se reservan las instrucciones que no están READY, deberían estar en ejecución pero les falta algún operando (u otra razón).
 
 Los operandos tendrán la misma estructura que la RAT, cuando todos los operandos de una instrucción tengan valid activado, entonces la instrucción está READY.
 
-Cada vez que una Unidad de ejecución pone disponible un operando, es decir, cada vez que termina de ejecutar una instrucción, ese operando es un valor que va a ser consumido por otras instrucciones que se encuentran en la Reservation Station. O sea, ahora ese valor está asociado a un tag, porque como ese registro no tenia un valor valido, estaba renombrado con un tag. Entonces, ahora esa unidad de ejecución deberá informar a todo el sistema diciendo: ”este tag ahora tiene este valor”. Luego, todos los que tengan ese tag lo van a reemplazar con ese valor y van a marcar a ese operando como Ready. Es decir, pisan el valor, dejan el tag y ponen en 1 el bit de validez. Ahora, como el bit de validez está en 1, la lógica no va a mirar el tag, va a mirar el valor.
+Cada vez que una Unidad de ejecución pone disponible un operando, es decir, cada vez que termina de ejecutar una instrucción, ese operando es un valor que va a ser consumido por otras instrucciones que se encuentran en la Reservation Station. O sea, ahora ese valor está asociado a un tag, porque como ese registro no tenia un valor valido, estaba renombrado con un tag. Entonces, ahora esa unidad de ejecución deberá informar a todo el sistema diciendo: ”este tag ahora tiene este valor” (**broadcastea** el valor) . Luego, todos los que tengan ese tag lo van a reemplazar con ese valor y van a marcar a ese operando como Ready. Es decir, pisan el valor, dejan el tag y ponen en 1 el bit de validez. Ahora, como el bit de validez está en 1, la lógica no va a mirar el tag, va a mirar el valor.
 
 - Si un operando destine recibe multiples escrituras la RS solo aplicará la última
 
@@ -212,21 +226,20 @@ Cuando una instrucción tiene todos sus operandos la RS la dispara o Despacha a 
 
 ![](adjuntos/tomasulo_diagram.png)
 
-El CDB resulta crucial para el broadcast de los resultados. En particular, cruza la salida de las unidad funcionales y atraviesa las Reservation Station, los Floating Point Buffers, los Floating Point
-Registers y el Floating Point Operations Stack.
+El CDB resulta crucial para el **broadcast** de los resultados. En particular, cruza la salida de las unidad funcionales y atraviesa las Reservation Station, los Floating Point Buffers, los Floating Point Registers y el Floating Point Operations Stack.
 
 ![](adjuntos/tomasulo_pseudo1.png)
 ![](adjuntos/tomasulo_pseudo2.png)
 
 
-## Predicción de saltos más sofisticada
+## ReOrder Buffer (ROB)
 
 - En general ejecución especulativa es la capacidad de una arquitectura para ejecutar instrucciones sin tener aún los resultados de sus dependencias, sino simplemente asumiendo que el resultado será uno determinado, y lo mas importante, tener la capacidad de deshacer la operación si la especulación no fue correcta.
 - Una vez que se tiene el resultado la instrucción deja de ser especulativa y con esta certeza está en condiciones de escribir en el registro destino.
 - Este tipo de ejecución especulativa hace que se tengan pre almacenados resultados de instrucciones posteriores que luego deben impactarse en sus operandos destino
 - El commit de los resultados debe hacerse en orden ❗
 - Esta es la función del **ReOrder Buffer (ROB)**.
-- Igual que la Reservation Station de Tomasulo, el ReOrder Buffer agrega registros en los cuales se van almacenando los resultados  de las instrucciones ejecutadas en base a especulación por hardware.
+- Igual que la Reservation Station de Tomasulo, el ReOrder Buffer agrega registros en los cuales se van almacenando los resultados de las instrucciones ejecutadas en base a especulación por hardware.
 - El resultado permanecerá en el ROB desde que se obtenga el resultado hasta que se copie (commit) en el operando destino.
 - La diferencia con el algoritmo de Tomasulo, es que éste ponı́a el resultado en registro directamente, y a partir de entonces el resto de las instrucciones lo tenı́a disponible. El ROB no lo escribe, sino hasta el commit. Y durante ese lapso que al especular se puede extender, el registro de la arquitectura no tiene el valor.
 
@@ -242,6 +255,18 @@ Su implementación es la siguiente:
 ![](adjuntos/rob_implementation3.png)
 ![](adjuntos/rob_implementation4.png)
 
+Una comparación entre ambos mecanismos (tener en cuenta que trabajan juntos, por un lado Tomasulo maneja las dependencias de datos y permite la ejecución fuera de orden, mientras que el ROB asegura la escritura en orden y la corrección en caso de fallos)
+
+Tomasulo es un *algoritmo* que describe cómo ejecutar instrucciones fuera de orden con manejo dinámico de datos, mientras que el ROB es una *estructura* física que implementa ciertas características necesarias para la corrección en sistemas fuera de orden.
+
+|                            | **Tomasulo**                                                       | **ReOrder Buffer (ROB)**                                                            |
+| -------------------------- | ------------------------------------------------------------------ | ----------------------------------------------------------------------------------- |
+| **Enfoque principal**      | Manejo de dependencias entre instrucciones                         | Garantizar la escritura en orden                                                    |
+| **Resultados intermedios** | Se actualizan dinámicamente en Reservation Stations                | Se almacenan en el ROB hasta que sea seguro escribirlos (cuando se pueda commitear) |
+| **Orden de escritura**     | Es inmediato (sin orden explícito)                                 | Es en el orden del programa original                                                |
+| **Corrección de errores**  | No tiene un mecanismo directo                                      | Soporta deshacer cambios en caso de fallos (excepciones o predicciones erróneas)    |
+| **Manejo de excepciones**  | No puede deshacer cambios realizados por instrucciones posteriores | Puede descartar instrucciones pendientes en el ROB                                  |
+También es importante destacar que Tomasulo es de 1967, en cambio, el ROB se creó para implementar la ejecución en orden para sistemas mucho más complejos (1980s e implementado en mayor escala en 1993)
 ## Three Cores Engine
 
 Caso práctico
@@ -253,3 +278,5 @@ Caso práctico
 ![](adjuntos/3core5.png)![](adjuntos/3core6.png)
 
 ![](adjuntos/3core7.png)![](adjuntos/3core8.png)
+
+#university #computer_architecture #hardware 

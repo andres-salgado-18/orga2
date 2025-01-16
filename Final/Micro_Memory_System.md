@@ -22,7 +22,7 @@ Esta misma se construye basada en la localidad por referencia.
 
 ![](./adjuntos/jerarquia_memoria.png)
 
-
+---
 # Tecnología de Memoria
 
 ## Memorias No Volátiles
@@ -41,8 +41,9 @@ Es mucho más rápida (latch), es muy estable, pero es costosa (6 transistores p
 
 Al ser más rápido el procesador se introduce los *Wait States* en cada ciclo de acceso de memoria, para la espera, luego en modo *READY* se podía hacer el acceso. Necesitamos minimizar esto, qué RAM ponemos?
 
+---
 # Caché
- Esta memoria ocupa el primer nivel de jerarquía, es una SRAM de muy bajo tiempo de acceso, mantiene *una **copia*** de los datos e instrucciones que se está utilizando, o cuya probabilidad de ser usados es alta (Principio de localidad), por lo tanto el principal uso de las SRAM son las caché.
+ Esta memoria ocupa el primer nivel de jerarquía, es una SRAM de muy bajo tiempo de acceso, mantiene una **copia** de los datos e instrucciones que se está utilizando, o cuya probabilidad de ser usados es alta (Principio de localidad), por lo tanto el principal uso de las SRAM son las caché.
 
 ## Métricas
 
@@ -67,13 +68,13 @@ La memoria principal normalmente está administrada por bloques llamados página
 ## Hardware dedicado
 Se agrega un controlador cache que está entre el procesador y el bus del sistema, intermedia. Las líneas del bus de control son las que indican al exterior qué operación está iniciando el procesador hacia el sistema, son las que arbitran (las líneas de control), el controlador cache las toma y se convierte en el acto en el árbitro del bus, el controlador caché es árbitro de bus. Este lee el address solicitado y qué se está haciendo (control), este determina si ir al bus de sistema o la cache. Se compone de la siguiente manera,
 
-![](procesador_controlador_cache.png)
+![](adjuntos/procesador_controlador_cache.png)
 
 ## Organización de una Cache
 
 La unidad mínima son las líneas (cada una es un conjunto de bytes) que están en una zona de la memoria (generalmente principal), la línea comienza en dirección física múltiplo al tamaño de la línea (como pequeñas páginas), cada línea lleva asociado un tag que indica a que dirección de memoria corresponde (los bits más significativos para saber en qué dirección inicia).
 
-![](cache_directory.png)
+![](adjuntos/cache_directory.png)
 
 La organización de un cash requiere contemplar 4 factores en función de las operaciones que requiere la CPU
 - Line placement
@@ -93,21 +94,21 @@ Para leer una dirección se hace $direccion / Line Size$ y se toma parte entera,
 - Direct mapped, único lugar donde poner la línea (mediante  LineFrameAddres $mod$ LineSize)
 	- Simplifica al máximo el placement y búsqueda, es la más barata en término energéticos ✅
 	- Peor hit rate, dos lineas frecuentemente usadas que ocupen el mismo lugar se desalojan entre sí, **conflict miss** ❌
-	- ![](direct_mapped.png)
+	- ![](adjuntos/direct_mapped.png)
 - Set associative, grupo de lineas en el cache en las que se puede guardar la nueva linea, LineFrameAddres $mod$ # sets
 	- Mejor relación de compromiso ✅
 	- Puede tener **conflict miss** ❌
 	- Se quiere disminuir el conflict miss, el controlador cache modifica la forma de organizar la memoria cache y la forma en la que esta mapea en la principal, la cache ahora se organiza en bancos (o vías). La memoria principal se trata (como antes) en conjunto de páginas pero el tamaño de cada uno será al de el tamaño de vía.
-	- ![](set_associative.png)
+	- ![](adjuntos/set_associative.png)
 
 ### **Line identification**
 
-![](line_id_1.png)
+![](adjuntos/line_id_1.png)
 
-![](line_id_2.png)
+![](adjuntos/line_id_2.png)
 ### **Line Replacement**
 
-Generalmente son tipo Set-asociativas, n este punto tenemos que resolver cual de las $n$ vías desalojar cuando hay **Conflict Miss**
+Generalmente son tipo Set-asociativas, en este punto tenemos que resolver cual de las $n$ vías desalojar cuando hay **Conflict Miss**
 - Random: Aleatoria (una de las $n$ veces)
 	- Fácil de construir ✅
 - LRU: Least Recently Used
@@ -136,11 +137,11 @@ La mayoría de accesos son lecturas. En cambio para escribir se necesita saber s
 
 **Obs:** Si una CPU necesita buscar más instrucciones y al mismo tiempo resolver un Load/Store con memoria (tenemos un bottleneck), se usa dos Cache separados para código y datos (*Split Cache*)
 
-![](amd_cache.png)
+![](adjuntos/amd_cache.png)
 
 ## Cache en Sistemas Multiprocesador
 
-**Sistema SMP** (Simetrical Multi Processing): dos o más CPUs (idénticas con igual prioridad), para cada par de CPU - Cache System en un mismo Circuito Integrado, se denomina Core.
+**Sistema SMP** (Symmetrical Multi Processing): dos o más CPUs (idénticas con igual prioridad), para cada par de CPU - Cache System en un mismo Circuito Integrado, se denomina Core.
 *img*
 
 Todos los cores tienen mismo latency para acceder a memoria, si aumentan el numero de cores requiere más ancho de banda para la DRAM, por lo que surgen los **Distributed Shared Memory** system, la memoria está distribuida por grupos de cores se accede a la local y la del resto.
@@ -152,7 +153,7 @@ Cuando escribimos en el cache del procesador y queda diferente de las copias de 
 
 Si el sistema es SMP, y se ejecuta paralelismo estos se ejecutan en varias CPU al mismo tiempo, eventualmente pueden existir copias de una misma variable en uno o más Cache de los restantes Cores, con lo cual las copias también quedan obsoletas -coherencia horizontal, resto de las cache-, debemos hallar una manera de que los demás Cores se enteren del cambio, para al menor invalidar la línea para saber que es obsoleta.
 
-❗ Objetivo: Asegurar coherencia para los datos compartidos en los diferentes Sistemas Cache sin sacrificar performance.
+❗ **Objetivo**: Asegurar coherencia para los datos compartidos en los diferentes Sistemas Cache sin sacrificar performance.
 
 Un **Sistema de Coherencia de Caches** debe proporcionar (para los item compartidos)
 - Migración: ocurre cuando un ítem se mueve a un cache de manera transparente
@@ -160,20 +161,20 @@ Un **Sistema de Coherencia de Caches** debe proporcionar (para los item comparti
 
 En los SMP se implementan por hardware, **protocolos de coherencia**, dos clases
 
-![](coherencia_cache_clases.png)
+![](adjuntos/coherencia_cache_clases.png)
 
 
 Dos categorías (sobre los que usan ==snoop bus==),
-![](coherencia_snoopy_protocols.png)
+![](adjuntos/coherencia_snoopy_protocols.png)
 
 
 ❕Mucho más usado el snoopy
 ❕*write invalidate* más usado (debido a que generalmente un número importante de procesadores)
 ### **Snoop Bus**
 
-El snoop bus se conecta desde el bus de sistema a cada controlador cache (uno por cada), este "espía" lo que hacen los demás procesadores al leer la dirección y la acción requerida, si es un hit se resuelve desde el que la detectó y activa el protocolo de coherencia, sino sigue en su proceso normal.
+El snoop bus se conecta desde el bus de sistema a cada controlador cache (uno por cada), este "espía" lo que hacen los demás procesadores al leer la dirección   (del bus de sistema) y la acción requerida (desde el bus de control), si es un hit se resuelve desde el que la detectó y activa el protocolo de coherencia, sino sigue en su proceso normal.
 
-![](coherencia_snoop_bus.png)
+![](adjuntos/coherencia_snoop_bus.png)
 
 
 ### **Write Invalidate**
@@ -214,7 +215,7 @@ $Defs$
 - Shared es impreciso, porque cuando se invalida no lo informan a los demás, por lo que una línea que está compartida en varios core, en algún momento puede haber sido descartada por todos los core excepto uno, el cual no se ha enterado (asume compartida), ventaja permite **write-back** (al usar write-invalid)
 - Veremos los requerimientos de la CPU local ![](adjuntos/msi_1.png)
 
-- De acuerdo a los requerimientos del snoop bus,![](msi_2.png)
+- De acuerdo a los requerimientos del snoop bus,![](adjuntos/msi_2.png)
 - ❌ Al ser tan impreciso shared, hay varias innecesarias (por las dudas de que alguien más tenga la línea)
 
 #### ***MESI***
@@ -222,32 +223,51 @@ $Defs$
 - Se agrega el estado Exclusive para disminuir la actividad en el Bus: una línea en estado **E** puede escribirse sin invalidar sobre el bus
 	- **M - Modified** Lı́nea presente solamente en éste cache que varió respecto de su valor en memoria del sistema (dirty). Requiere write back hacia la memoria del sistema antes que otro procesador lea desde allí el dato (que ya no es válido).
 	- **E – Exclusive** Lı́nea presente solo en esta cache, que coincide con la copia en memoria principal (clean).
-	- **S – Shared** Lı́nea del cache presente y puede estar almacenada en los caches de otros procesadores.
+	- **S – Shared** Lı́nea del cache presente y *puede* estar almacenada en los caches de otros procesadores.
 	- **I – Invalid** Lı́nea de cache no es válida.
 - Una de las grandes mejores es la de, cuando una línea está en **Exclusive** y recibe un CPU Write, la misma pasa a estado modified y **NO** invalida el bus (ya que era el único que la tenía)
 - 
-![](mesi_1.png)
+![](adjuntos/mesi_1.png)
 
 Se agrega RFO (*Request For Ownership*), el cual estará conectado entre todos los cache controllers. Para qué? El broadcast de invalidación usa esta línea, es enviada por el Cache que necesita escribir en estado Shared o Invalid (para que todos invaliden)
 - Modified y Exclusive son estados **precisos**, el protocolo asegura que una línea en cualquiera de estos estados solo está en este cache (**Ownership**)
 
-![](mesi_2.png)
+![](adjuntos/mesi_2.png)
 
-![](mesi_3.png)
+![](adjuntos/mesi_3.png)
 
 
 Se agrega una línea SHARED la cual se usará para os cores se informan, si un core tiene una linea E mira por el snoop bus y ve que se va a leer esa línea, activa shared para que el otro core que la está leyendo no la ponga *exclusive* sino *shared*.
 
-![](mesi_4.png)
+![](adjuntos/mesi_4.png)
 
-$To-Do:$ Hacer tabla de cambio de estados!
+
+###### Tabla de estados de una cache que requiere el dato dió un Miss
+
+| Otra cache tiene la línea en | Read Miss                                                                                                                                                                                                                                                                                     | Write Miss                                                                                                                                                                                                                                                                                                                                                         |
+| ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Exclusive                    | SHARED señal al lector <br>indicando que es <br>compartida. En **ambos** <br>esa línea se marca como **Shared** (es necesaria la primera señal para que se entere el lector que la <br>línea es compartida o exclusiva)                                                                       | El escritor trae la línea enviando RFO (clean) para que mi copia pase a estado **Invalid**, el escritor pasa a **Modified**                                                                                                                                                                                                                                        |
+| Shared                       | Si uno o más tienen la copia (clean), se envia la señal SHARED y el lector la marca como **Shared**                                                                                                                                                                                           | El escritor trae la línea de memoria y la modifica, envía RFO (clean) para que mi copia pase a estado **Invalid**, el escritor pasa a **Modified**                                                                                                                                                                                                                 |
+| Modified                     | 1. Activa RFO para marcar al lector que el dato está incoherente (bus alta impedancia)<br>2. Escribe en memoria el valor<br>3. El lector copia el valor que está en el bus de datos y pasa a **Exclusive**<br>4. Si el otro termina la operación entonces ambas terminan en estado **Shared** | Se debe avisar al escritor que la copia está desactualizada y el es el owner, por lo tanto<br>1. Marcar RFO para indicarle lo anteriormente dicho al escritor<br>2. **Invalid** mi copia del valor ya que el escritor lo modificará<br>3. Escritor copia el valor ya actualizado desde el bus de datos<br>4. El escritor modifica su valor y se marca **Modified** |
+| Ninguna<br>/Invalid          | El lector lee desde memoria y se marca como **Exclusive**                                                                                                                                                                                                                                     | El escritor trae la línea de memoria y pasa a **Modified**                                                                                                                                                                                                                                                                                                         |
+**Read hit:** No importa el estado en el que esté simplemente la cache lee el valor y se queda en el **mismo** estado
+
+###### Tabla de estados de una cache que efectivamente tiene el dato requerido y lo escribe
+
+| El Cache tiene la linea en | Write Hit                                                                                                                                   |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| Exclusive                  | Ya es Owner de la línea pasa a **Modified** *(esta es la gran ventaja de MESI, no tiene que usar el bus)*                                   |
+| Shared                     | Se debe tener Ownership para escribir así que envía RFO para que marquen **Invalid** sus copias. Y el cache que escribe pasa a **Modified** |
+| Modified                   | Escribe, y sigue en **Modified**                                                                                                            |
+
+
 
 #### ***MESIF***
 
-Optimiza el acceso al Bus en sistemas de memoria distribuida (agrega el estado **FORWARD**, forma especial de estado S)
+Optimiza el acceso al Bus en sistemas de memoria distribuida (agrega el estado **FORWARD**, forma especial de estado SHARED)
 
-- El protocolo debe asegurar que enter los caches que tienen  una linea en estado **S**, *una* de ellas tenga estado **F**, la invalidación de una línea F y S no se informa, el próximo *Read miss* será resuelto por jerarquía (ver ❌)
-- Cómo funciona? Si se tiene **shared** en **MESI** y se quiere leer (Read) tiene que buscar en la memoria principal, el forward significa que el core que tenga estado F es quien proveerá la línea (es shared forwardeable), una vez que la línea está shared, la línea se accede desde algún cache, ✅ no se penaliza un Read Miss en un core
+- El protocolo debe asegurar que entre los caches que tienen  una linea en estado **S**, ***una*** de ellas tenga estado **F**, la invalidación de una línea F y S no se informa, el próximo *Read miss* será resuelto por jerarquía (ver ❌)
+- Cómo funciona? Si se tiene **shared** en **MESI** y se quiere leer (Read Miss) tiene que buscar en la memoria principal (❓ - Por qué???), el forward significa que el core que tenga estado F es quien proveerá la línea (es shared forwardeable), una vez que la línea está shared, la línea se accede desde algún cache, ✅ no se penaliza un Read Miss en un core
 - ❌ SI la linea F es desalojada. Para minimizar este efecto se asigna el estado **F** mediante LRU. Cuando forwardeo, quién lo obtuvo queda en **Forward**
 
 #### ***MOESI***
@@ -263,7 +283,8 @@ Optimiza el acceso al Bus en sistemas de memoria distribuida (agrega el estado *
 - ❕**Owned** le proveerá a "nuevos lectores" (como un forward)
 - En caso de que nadie tenga la línea se busca en jerarquía
 
-## Memorias dinámicas
+---
+# Memorias dinámicas
 
 *Nota:* Generalmente están fuera del chip de la CPU (al contrario que las cache)
 
@@ -289,13 +310,13 @@ lógico inicial.
 ### **Organización**
 
 Matriz rectangular de celdas, con decodificador de columna y uno de fila, 
-![](dram_org1.png)
+![](adjuntos/dram_org1.png)
 
-![](dram_org2.png)
+![](adjuntos/dram_org2.png)
 
 Bancos,
 
-![](dram_banco.png)
+![](adjuntos/dram_banco.png)
 
 
 ### *DIMM*
@@ -308,7 +329,7 @@ Se organizan en DIMMs se montan a ambos lados del PCB, cada uno se puede pensar 
 
 **Array:** Cada banco de un dispositivo DRAM se compone de un conjunto de arrays esclavos, cuyo número determina el ancho del dispositivo DRAM (x2,x4, etc).
 
-![](dram_grapg.png)
+![](adjuntos/dram_grapg.png)
 
 ### **Standards**
 
@@ -316,14 +337,16 @@ Ahora se usan las SDRAM, el modo burst es consecuencia del principio de vecindad
 
 Estándar: JEDEC
 
-![](jedec.png)
+![](adjuntos/jedec.png)
 
 ### **Controladores de memoria**
 
-![](controladores_de_memoria.png)
+![](adjuntos/controladores_de_memoria.png)
 
 ### **Configuración de DRAM**
 
 Registro de modo de un SDRAM Device
 
-![](configuracion.png)![](configuracion_2.png)
+![](adjuntos/configuracion.png)![](configuracion_2.png)
+
+#university #computer_architecture #hardware 
