@@ -177,21 +177,20 @@ El algoritmo de Tomasulo surge para resolver los límites que tenía Scoreboardi
 Qué necesita un procesador para implementar Ejecución Fuera de Orden?
 
 1. Mantener un “link” entre el productor de un dato con su(s) consumidor(es)
-	- Register Renaming
+	- Register Renaming: Asocia un *tag* a cada valor (registro)
 2. Mantener las instrucciones en espera hasta que estén listas para ejecución
 	- Inserta instrucción a la Reservation Station después del renombre
 3. Las instrucciones deben saber cuando sus operandos están “Ready”
-	* Broadcast el tag cuando el valor es producido
-	* Las instrucciones comparan sus "source tags" con el "broadcasted" tag, si son igualas los mismos -sus operandos- pasan a "READY"
+	* Broadcast el *tag* cuando el valor es producido
+	* Las instrucciones comparan sus "source tags" con el "broadcasted" tag, si son iguales -sus operandos- pasan a "READY"
 4. Despachar (“disparar”) la instrucción a su Unidad Funcional ni bien todos sus operandos estén “Ready”.
 	- La instrucción "se despierta" si todos sus "sources" (operandos) están en estado "READY"
 	- Si múltiples instrucciones están "READY" sólo pasa una a la Unidad Funcional
 
 ---
-### **Mantener un “link”entre el productor de un dato con su(s) consumidor(es)**
+### **Register Renaming**
 
-
-Para esto se usa *Register Renaming*, este método permite asociar un "tag" con cada operando
+Este método permite asociar un "tag" con cada operando
 
 ![](adjuntos/RS_ex1.png)
 ![](adjuntos/RS_ex2.png)
@@ -206,7 +205,7 @@ Una entrada por cada registro (físico) cada una con un campo
 - Valor: Valor de dicho registro
 - Valid: Si es válido o no el valor
 
-Nota: Si el valor de *Valid* es 0, **hay que tener** un tag, ya que un valor será producido, mientras que si el valor es 1 el valor es el correcto
+***Nota***: Si el valor de *Valid* es 0, **hay que tener** un tag, ya que un valor será producido, mientras que si el valor es 1 el valor es el correcto y el tag resulta irrelevante
 
 ### **Reservation Station**
 
@@ -214,7 +213,7 @@ Es un buffer donde se reservan las instrucciones que no están READY, deberían 
 
 Los operandos tendrán la misma estructura que la RAT, cuando todos los operandos de una instrucción tengan valid activado, entonces la instrucción está READY.
 
-Cada vez que una Unidad de ejecución pone disponible un operando, es decir, cada vez que termina de ejecutar una instrucción, ese operando es un valor que va a ser consumido por otras instrucciones que se encuentran en la Reservation Station. O sea, ahora ese valor está asociado a un tag, porque como ese registro no tenia un valor valido, estaba renombrado con un tag. Entonces, ahora esa unidad de ejecución deberá informar a todo el sistema diciendo: ”este tag ahora tiene este valor” (**broadcastea** el valor) . Luego, todos los que tengan ese tag lo van a reemplazar con ese valor y van a marcar a ese operando como Ready. Es decir, pisan el valor, dejan el tag y ponen en 1 el bit de validez. Ahora, como el bit de validez está en 1, la lógica no va a mirar el tag, va a mirar el valor.
+Cada vez que una Unidad de ejecución pone disponible un operando, es decir, cada vez que termina de ejecutar una instrucción, ese operando es un valor que va a ser consumido por otras instrucciones que se encuentran en la Reservation Station. O sea, ahora ese valor está asociado a un tag, porque como ese registro no tenia un valor valido, estaba renombrado con un tag. Entonces, ahora esa unidad de ejecución deberá informar a todo el sistema diciendo: ”este tag ahora tiene este valor” (**broadcastea** el valor) . Luego, todos los que tengan ese tag lo van a reemplazar con ese valor y van a marcar a ese operando como *Ready*. Es decir, pisan el valor, dejan el tag y ponen en 1 el bit de validez. Ahora, como el bit de validez está en 1, la lógica no va a mirar el tag, va a mirar el valor.
 
 - Si un operando destine recibe multiples escrituras la RS solo aplicará la última
 
@@ -259,6 +258,8 @@ Una comparación entre ambos mecanismos (tener en cuenta que trabajan juntos, po
 
 Tomasulo es un *algoritmo* que describe cómo ejecutar instrucciones fuera de orden con manejo dinámico de datos, mientras que el ROB es una *estructura* física que implementa ciertas características necesarias para la corrección en sistemas fuera de orden.
 
+Se completan las instrucciones fuera de orden, pero se reordenan antes de hacer los resultados visibles en el estado de la arquitectura
+
 |                            | **Tomasulo**                                                       | **ReOrder Buffer (ROB)**                                                            |
 | -------------------------- | ------------------------------------------------------------------ | ----------------------------------------------------------------------------------- |
 | **Enfoque principal**      | Manejo de dependencias entre instrucciones                         | Garantizar la escritura en orden                                                    |
@@ -266,6 +267,8 @@ Tomasulo es un *algoritmo* que describe cómo ejecutar instrucciones fuera de or
 | **Orden de escritura**     | Es inmediato (sin orden explícito)                                 | Es en el orden del programa original                                                |
 | **Corrección de errores**  | No tiene un mecanismo directo                                      | Soporta deshacer cambios en caso de fallos (excepciones o predicciones erróneas)    |
 | **Manejo de excepciones**  | No puede deshacer cambios realizados por instrucciones posteriores | Puede descartar instrucciones pendientes en el ROB                                  |
+
+
 También es importante destacar que Tomasulo es de 1967, en cambio, el ROB se creó para implementar la ejecución en orden para sistemas mucho más complejos (1980s e implementado en mayor escala en 1993)
 ## Three Cores Engine
 
