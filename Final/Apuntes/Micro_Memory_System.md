@@ -221,10 +221,10 @@ $Defs$
 #### ***MESI***
 
 - Se agrega el estado Exclusive para disminuir la actividad en el Bus: una línea en estado **E** puede escribirse sin invalidar sobre el bus
-	- **M - Modified** Lı́nea presente solamente en éste cache que varió respecto de su valor en memoria del sistema (dirty). Requiere write back hacia la memoria del sistema antes que otro procesador lea desde allí el dato (que ya no es válido).
-	- **E – Exclusive** Lı́nea presente solo en esta cache, que coincide con la copia en memoria principal (clean).
-	- **S – Shared** Lı́nea del cache presente y *puede* estar almacenada en los caches de otros procesadores.
-	- **I – Invalid** Lı́nea de cache no es válida.
+	- **M - Modified** Línea presente solamente en éste cache que varió respecto de su valor en memoria del sistema (dirty). Requiere write back hacia la memoria del sistema antes que otro procesador lea desde allí el dato (que ya no es válido).
+	- **E – Exclusive** Línea presente solo en esta cache, que coincide con la copia en memoria principal (clean).
+	- **S – Shared** Línea del cache presente y *puede* estar almacenada en los caches de otros procesadores.
+	- **I – Invalid** Línea de cache no es válida.
 - Una de las grandes mejores es la de, cuando una línea está en **Exclusive** y recibe un CPU Write, la misma pasa a estado modified y **NO** invalida el bus (ya que era el único que la tenía)
 - 
 ![](adjuntos/mesi_1.png)
@@ -237,7 +237,7 @@ Se agrega RFO (*Request For Ownership*), el cual estará conectado entre todos l
 ![](adjuntos/mesi_3.png)
 
 
-Se agrega una línea SHARED la cual se usará para os cores se informan, si un core tiene una linea E mira por el snoop bus y ve que se va a leer esa línea, activa shared para que el otro core que la está leyendo no la ponga *exclusive* sino *shared*.
+Se agrega una línea SHARED la cual se usará para que los cores se informen entre sí, si un core tiene una linea E mira por el snoop bus y ve que se va a leer esa línea, activa shared para que el otro core que la está leyendo no la ponga *exclusive* sino *shared*.
 
 ![](adjuntos/mesi_4.png)
 
@@ -267,22 +267,21 @@ Se agrega una línea SHARED la cual se usará para os cores se informan, si un c
 Optimiza el acceso al Bus en sistemas de memoria distribuida (agrega el estado **FORWARD**, forma especial de estado SHARED)
 
 - El protocolo debe asegurar que entre los caches que tienen  una linea en estado **S**, ***una*** de ellas tenga estado **F**, la invalidación de una línea F y S no se informa, el próximo *Read miss* será resuelto por jerarquía (ver ❌)
-- Cómo funciona? Si se tiene **shared** en **MESI** y se quiere leer (Read Miss) tiene que buscar en la memoria principal (❓ - Por qué???), el forward significa que el core que tenga estado F es quien proveerá la línea (es shared forwardeable), una vez que la línea está shared, la línea se accede desde algún cache, ✅ no se penaliza un Read Miss en un core
+- Cómo funciona? Si se tiene **shared** en **MESI** y se quiere leer (Read Miss)  el forward significa que el core que tenga estado F es quien proveerá la línea (es shared forwardeable), una vez que la línea está shared, la línea se accede desde algún cache, ✅ no se penaliza un Read Miss en un core
 - ❌ SI la linea F es desalojada. Para minimizar este efecto se asigna el estado **F** mediante LRU. Cuando forwardeo, quién lo obtuvo queda en **Forward**
 
 #### ***MOESI***
 - Se le agrega **Owned**
-- **Shared** indica que esta copia de la lı́nea puede estar en otros Caches (sigue siendo impreciso), y es válida (es la copia mas reciente de la lı́nea). Hasta aquí es **igual que en MESI**
-- Pero a diferencia de MESI, ==la copia en memoria principal puede ahora no ser válida.==
-- Si ningún Cache tiene una copia de esa misma lı́nea en estado Owned, la copia de memoria principal es válida. Sino...no. **Y aquí reside la diferencia.**
-- Solo una copia de la línea tiene el estado **Owned**
-- Esta será la único que puede escribirla sin hacer **write back**
-- El resto de las copias compartidas están en **S** y válidas
-- Si escribimos en **Owned** se activa transacción por Bus local y se actualizan los demás caches que tiene la línea en **S**
-- ✅ Disminuyen los **write back** por intentar leer línea *Dirty*, y  las invalidaciones al escribir en **Shared**
-- ❕**Owned** le proveerá a "nuevos lectores" (como un forward)
-- En caso de que nadie tenga la línea se busca en jerarquía
-
+- En los protocolos MSI y MESI, cuando una caché detecta la lectura de una dirección correspondiente a una línea que tiene en estado _Modified_, debe realizar un _write back_. Los datos se envían al controlador de memoria porque la caché renuncia a la propiedad (al degradarse al estado _Shared_), de modo que la LLC/memoria adquiere el _ownership_ de la línea y, por lo tanto, debe tener una copia actualizada de los datos con la que responder a las solicitudes posteriores.
+- En MOESI, la línea pasa de **_Modified_ a _Owned_**, y la caché se convierte en propietaria de la línea y es responsable de proveer la copia a los demás cachés que la soliciten. El **_Owner_** es el responsable de la coherencia.
+- El estado _Owned_ elimina el _write back_ para actualizar la LLC/memoria cuando una caché detecta un _Read Miss_ de una línea que posee en estado _Modified_. A diferencia de MESI, ahora la copia de LLC/memoria no es válida (_Shared dirty_), y además la caché dueña se encarga de enviarle el dato a la que lo solicitó, la cual lo obtiene con mínima _latency_ y colocará su línea en estado _Shared_.
+- Activa la línea _Shared_ para que el lector coloque la línea leída en ese estado.
+- Si ningún caché tiene una copia de esa misma línea en estado _Owned_, la copia de la LLC/memoria es válida.
+- Solo una copia de una línea determinada puede tomar estado _Owned_ en un caché.
+- Todas las copias _Shared_ y la _Owned_ de la línea son válidas, pero diferentes de la copia en la LLC/memoria (**incoherentes**).
+- La que está en estado _Owned_ es la única con derecho para efectuar _write back_ llegado el momento.
+- El resto de las copias compartidas permanecen _Shared_ y válidas.
+- Cuando se escribe una línea en estado _Owned_ o _Shared_, el controlador de la línea a escribir activa _RFO_ y efectúa el _write back_, terminando en estado _Modified_. El resto se invalida (incluso la línea _Owned_, si la escritora es alguna de las que tenían estado _Shared_).
 ---
 # Memorias dinámicas
 

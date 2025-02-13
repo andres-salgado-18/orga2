@@ -37,7 +37,7 @@
 ## Finales resueltos
 - [Final - 09/03/18](Finales_Resueltos/Final_09_03_18.md)
 - [Final - 06/08/19](Finales_Resueltos/Final_06_08_19.md)
-- [Final - 02/08/22](Finales_Resueltos/Final_02_08_2022.md)
+- [Final - 02/08/22](Finales_Resueltos/Final_02_08_22.md)
 - [Final - 28/02/23](Finales_Resueltos/Final_28_02_23.md)
 
 
