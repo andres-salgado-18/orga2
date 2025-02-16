@@ -28,7 +28,7 @@
 ## Teóricas
  - [Introducción a la Microarquitectura](T0401_MicroArq_Intro.pdf)
  - [Microarquitectura - Memoria](T0402_MicroArq-mem.pdf)
- - [Microarquitectura - Instruction Level Parallelism](T05_uArch-ILP.pdf)
+ - [Microarquitectura - Instruction Level Parallelism](T05_ILP.pdf)
 
 ## Apuntes
 - [Microarquitectura - Sistema de Memoria](Micro_Memory_System.md)
