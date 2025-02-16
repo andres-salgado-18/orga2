@@ -1,8 +1,10 @@
+
 # Instruction Level Parallelism
 
 En la maquina de ejecución (ciclo fetch-decode-execute) se ejecutaba un ciclo se clock por cada etapa de la misma
 
 *Pipeline,* arquitectura que permite crear el efecto de superponer en el tiempo, la ejecución de varias instrucción a la vez. Se logra si todos los bloques funcionales trabajan en paralelo pero cada uno en una instrucción diferente, cada parte se denomina *stage*.
+
 ![](adjuntos/pipeline_intro.png)
 
 
@@ -174,7 +176,7 @@ El algoritmo de Tomasulo surge para resolver los límites que tenía Scoreboardi
 
 *Objetivo*: Minimizar riesgos RAW, e implementar Register Renaming en los WAR y WAW para neutralizarlos
 
-Qué necesita un procesador para implementar Ejecución Fuera de Orden?
+#### Qué necesita un procesador para implementar Ejecución Fuera de Orden?
 
 1. Mantener un “link” entre el productor de un dato con su(s) consumidor(es)
 	- Register Renaming: Asocia un *tag* a cada valor (registro)
@@ -267,9 +269,14 @@ Se completan las instrucciones fuera de orden, pero se reordenan antes de hacer 
 | **Orden de escritura**     | Es inmediato (sin orden explícito)                                 | Es en el orden del programa original                                                |
 | **Corrección de errores**  | No tiene un mecanismo directo                                      | Soporta deshacer cambios en caso de fallos (excepciones o predicciones erróneas)    |
 | **Manejo de excepciones**  | No puede deshacer cambios realizados por instrucciones posteriores | Puede descartar instrucciones pendientes en el ROB                                  |
-
+Si una instrucción genera una **excepción**, el ROB se asegura de que la excepción se maneje correctamente:
+    - **Antes de retirar la instrucción del ROB**, la CPU puede descartar todas las instrucciones posteriores que se ejecutaron fuera de orden y restaurar el estado a un punto seguro.
+    - Si el procesador **no tuviera un ROB**, una excepción podría ocurrir en una instrucción mientras otras instrucciones posteriores ya modificaron el estado del procesador, causando una excepción **imprecisa**.
+El ROB permite que las excepciones sean **precisas**, ya que el procesador puede detenerse en el punto exacto donde ocurrió la primera excepción según el orden del programa.
 
 También es importante destacar que Tomasulo es de 1967, en cambio, el ROB se creó para implementar la ejecución en orden para sistemas mucho más complejos (1980s e implementado en mayor escala en 1993)
+
+
 ## Three Cores Engine
 
 Caso práctico
