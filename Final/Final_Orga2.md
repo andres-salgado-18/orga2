@@ -26,9 +26,9 @@
 	- ==Procesadores Multithread==
 	- ==Multicore y Manycore==
 ## Teóricas
- - [Introducción a la Microarquitectura](T0401_MicroArq_Intro.pdf)
- - [Microarquitectura - Memoria](T0402_MicroArq-mem.pdf)
- - [Microarquitectura - Instruction Level Parallelism](T05_ILP.pdf)
+ - [Introducción a la Microarquitectura](adjuntos/T0401_MicroArq_Intro.pdf)
+ - [Microarquitectura - Memoria](adjuntos/T04_mem.pdf)
+ - [Microarquitectura - Instruction Level Parallelism](adjuntos/T05_ILP.pdf)
 
 ## Apuntes
 - [Microarquitectura - Sistema de Memoria](Micro_Memory_System.md)
